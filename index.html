@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Calculadora — Da Fonte Advogados</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- ── TOPBAR ── -->
+  <div class="top-header">
+    <label class="brand" for="logoInput" title="Clique para trocar logo">
+      <div class="logo-box" id="logoBox">
+        <span>D</span>
+        <img id="logoImg" alt="logo">
+      </div>
+      <span class="brand-name">Calculadora — Da Fonte Advogados</span>
+    </label>
+    <input type="file" id="logoInput" accept="image/*">
+
+    <div class="header-right">
+      <!-- Pause -->
+      <button class="btn-pause-top" id="btnPauseTop" onclick="pause()">
+        <svg viewBox="0 0 24 24" fill="currentColor">
+          <rect x="6"  y="4" width="4" height="16" rx="1"/>
+          <rect x="14" y="4" width="4" height="16" rx="1"/>
+        </svg>
+        Pausar
+      </button>
+
+      <!-- Section badge -->
+      <span class="header-badge" id="headerBadge">Registro</span>
+
+      <!-- History / magnifier -->
+      <button class="btn-history" onclick="openHistory()" title="Histórico de avaliações">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8"/>
+          <path d="m21 21-4.35-4.35"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- ── REGISTER SCREEN ── -->
+  <div class="register-wrap" id="registerWrap">
+    <div class="register-card">
+
+      <div class="register-top">
+        <p class="register-top-label">Nova Avaliação</p>
+        <h1 class="register-top-title">Identifique a demanda</h1>
+        <p class="register-top-sub">Preencha os dados antes de iniciar o questionário</p>
+      </div>
+
+      <div class="register-body">
+        <div class="field-group">
+
+          <div class="field">
+            <label class="field-label" for="fModelo">Nome do Modelo</label>
+            <input
+              class="field-input" id="fModelo" type="text"
+              placeholder="Ex: Contrato de Prestação de Serviços"
+              autocomplete="off"
+            >
+          </div>
+
+          <div class="field">
+            <label class="field-label" for="fEmpresa">Nome da Empresa</label>
+            <input
+              class="field-input" id="fEmpresa" type="text"
+              placeholder="Ex: Acme Indústria S.A."
+              autocomplete="off"
+            >
+          </div>
+
+          <div class="field">
+            <label class="field-label" for="fArea">Área</label>
+            <select class="field-select" id="fArea">
+              <option value="" disabled selected>Selecione a área jurídica</option>
+              <option>Cível</option>
+              <option>Trabalhista</option>
+              <option>Tributário</option>
+              <option>Societário</option>
+              <option>Contratos</option>
+              <option>Propriedade Intelectual</option>
+              <option>Regulatório</option>
+              <option>Ambiental</option>
+              <option>Fusões & Aquisições</option>
+              <option>Compliance</option>
+              <option>Outro</option>
+            </select>
+          </div>
+
+        </div>
+      </div>
+
+      <div class="register-footer">
+        <button class="btn-start" onclick="startEvaluation()">
+          Iniciar avaliação →
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ── FORM CARD ── -->
+  <div class="card" id="formCard" style="display:none;">
+    <div class="prog-wrap">
+      <div class="prog-meta">
+        <span class="prog-label">Progresso</span>
+        <span class="prog-count" id="progCount">1 de 17</span>
+      </div>
+      <div class="prog-track">
+        <div class="prog-fill" id="progFill"></div>
+      </div>
+    </div>
+
+    <div id="qContent"></div>
+
+    <div class="card-footer">
+      <button class="btn btn-prev" id="btnPrev" onclick="go(-1)" disabled>Anterior</button>
+      <button class="btn btn-next" id="btnNext" onclick="go(1)">Próxima</button>
+    </div>
+  </div>
+
+  <!-- ── HINT AREA (below form card) ── -->
+  <div class="q-hint" id="hintArea" style="display:none;"></div>
+
+  <!-- ── PAUSE SCREEN ── -->
+  <div class="pause-wrap" id="pauseWrap">
+    <div class="pause-card">
+      <div class="pause-icon">
+        <svg viewBox="0 0 24 24" fill="currentColor">
+          <rect x="6"  y="4" width="4" height="16" rx="1.5"/>
+          <rect x="14" y="4" width="4" height="16" rx="1.5"/>
+        </svg>
+      </div>
+      <h2 class="pause-title">Avaliação pausada</h2>
+      <p class="pause-sub">Sem pressa. Quando quiser continuar,<br>basta clicar no botão abaixo.</p>
+      <div class="pause-pill" id="pausePill">Etapa 1 de 17</div>
+      <div class="pause-actions">
+        <button class="btn-resume" onclick="resume()">
+          <svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>
+          Continuar avaliação
+        </button>
+        <button class="btn-restart-sm" onclick="restart()">Recomeçar do início</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── RESULT SCREEN ── -->
+  <div class="result-wrap" id="resultWrap">
+    <div class="result-card">
+
+      <div class="result-top">
+        <p class="result-eyebrow">Pontuação Final da Demanda</p>
+        <div class="result-score" id="rScore">0</div>
+        <p class="result-sub">pontos calculados</p>
+      </div>
+
+      <!-- Registration meta -->
+      <div class="result-meta">
+        <div class="result-meta-item">
+          <span class="result-meta-label">Modelo</span>
+          <span class="result-meta-value" id="rModelo">—</span>
+        </div>
+        <div class="result-meta-item">
+          <span class="result-meta-label">Empresa</span>
+          <span class="result-meta-value" id="rEmpresa">—</span>
+        </div>
+        <div class="result-meta-item">
+          <span class="result-meta-label">Área</span>
+          <span class="result-meta-value" id="rArea">—</span>
+        </div>
+      </div>
+
+      <div class="result-stats">
+        <div class="stat">
+          <div class="stat-val" id="rSoma">—</div>
+          <div class="stat-lbl">Soma Base</div>
+        </div>
+        <div class="stat">
+          <div class="stat-val" id="rHoras">—</div>
+          <div class="stat-lbl">Horas DFA</div>
+        </div>
+        <div class="stat">
+          <div class="stat-val" id="rMult">—</div>
+          <div class="stat-lbl">Pts × Horas</div>
+        </div>
+      </div>
+    </div>
+
+    <button class="btn-restart" onclick="restart()">← Fazer nova avaliação</button>
+  </div>
+
+  <!-- ── HISTORY MODAL ── -->
+  <div class="modal-overlay" id="historyModal">
+    <div class="history-panel">
+
+      <div class="history-head">
+        <div class="history-head-top">
+          <span class="history-title">Histórico de avaliações</span>
+          <button class="btn-close-modal" onclick="closeHistory()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M18 6 6 18M6 6l12 12"/>
+            </svg>
+          </button>
+        </div>
+
+        <!-- Search -->
+        <div class="history-search-wrap">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+          </svg>
+          <input
+            class="history-search" id="histSearch" type="text"
+            placeholder="Buscar por empresa, modelo ou área…"
+          >
+        </div>
+
+        <!-- Filter chips -->
+        <div class="history-filters" id="histFilters"></div>
+      </div>
+
+      <!-- Results list -->
+      <div class="history-list" id="histList">
+        <div class="history-empty">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+          </svg>
+          Nenhuma avaliação salva ainda.
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
