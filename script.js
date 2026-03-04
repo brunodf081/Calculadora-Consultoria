@@ -1,14 +1,14 @@
 const REG = {
   cliente:           { 1:0,  2:0  },
-  cliNovo:           { 1:3,  2:0  },
+  cliNovo:           { 1:0,  2:3  },
   cliCasa:           { 1:1,  2:2  },
   demandaQuaPre:     { 1:1,  2:2  },
-  nivConco:          { 1:1,  2:2,  3:3 },
+  nivConco:          { 1:3,  2:2,  3:1 },
   negociacao:        { 1:1,  2:2,  3:3 },
   nivSenioridadeExe: { 1:1,  2:2,  3:3 },
   nivSenioridadeRev: { 1:1,  2:2,  3:3 },
   timeExe:           { 1:1,  2:2  },
-  nivOcu:            { 1:1,  2:2,  3:3 },
+  nivOcu:            { 1:1,  2:2,  3:3 }, // 
   grauComplex:       { 1:1,  2:2,  3:3 },
   estudosAprof:      { 1:3,  2:0  },
   qtdReuniao:        { 1:3,  2:0  },
