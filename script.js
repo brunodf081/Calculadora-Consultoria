@@ -1,5 +1,3 @@
-// ── PONTUAÇÃO & PESOS ──────────────────────────────────────────────────────
-
 const REG = {
   cliente:           { 1:0,  2:0  },
   cliNovo:           { 1:3,  2:0  },
@@ -25,8 +23,6 @@ const PESOS = {
   nivSenioridadeExe:1, nivSenioridadeRev:1, timeExe:1, nivOcu:1, grauComplex:1,
   estudosAprof:1, qtdReuniao:1, impactoEco:2, nivUrg:2, minutaPrev:1, modeloPartido:2,
 };
-
-// ── PERGUNTAS COM DICAS ────────────────────────────────────────────────────
 
 const QS = [
   {
@@ -141,16 +137,12 @@ const QS = [
   },
 ];
 
-// ── ESTADO ─────────────────────────────────────────────────────────────────
-
 let resp       = {};
 let idx        = 0;
 let regInfo    = { modelo:'', empresa:'', area:'' };
 let historyDB  = JSON.parse(localStorage.getItem('dfa_history') || '[]');
 let histSearch = '';
-let histFilter = ''; // 'empresa' | 'modelo' | 'area' | ''
-
-// ── HELPERS ────────────────────────────────────────────────────────────────
+let histFilter = '';
 
 function ativas() {
   return QS.filter(p => !p.dep || resp[p.dep.id] === p.dep.v);
@@ -169,8 +161,6 @@ function formatDate(iso) {
   return d.toLocaleDateString('pt-BR', { day:'2-digit', month:'2-digit', year:'2-digit' });
 }
 
-// ── VIEWS ──────────────────────────────────────────────────────────────────
-
 function setView(view) {
   document.getElementById('registerWrap').style.display = view === 'register' ? '' : 'none';
   document.getElementById('formCard').style.display     = view === 'form'     ? '' : 'none';
@@ -180,15 +170,12 @@ function setView(view) {
   document.getElementById('btnPauseTop').classList.toggle('visible', view === 'form');
 }
 
-// ── REGISTER ───────────────────────────────────────────────────────────────
-
 function startEvaluation() {
   const modelo  = document.getElementById('fModelo').value.trim();
   const empresa = document.getElementById('fEmpresa').value.trim();
   const area    = document.getElementById('fArea').value;
 
   if (!modelo || !empresa || !area) {
-    // shake empty fields
     ['fModelo','fEmpresa','fArea'].forEach(id => {
       const el = document.getElementById(id);
       if (!el.value.trim()) {
@@ -206,8 +193,6 @@ function startEvaluation() {
   render();
 }
 
-// ── RENDER ─────────────────────────────────────────────────────────────────
-
 function render() {
   const list  = ativas();
   const total = list.length;
@@ -219,7 +204,6 @@ function render() {
   document.getElementById('btnPrev').disabled         = idx === 0;
   document.getElementById('btnNext').textContent      = idx === total-1 ? 'Calcular' : 'Próxima';
 
-  // Question HTML
   let html = `
     <div class="q-header" style="margin:20px 24px 0;">
       <div class="q-title">Pergunta ${idx+1}</div>
@@ -247,7 +231,6 @@ function render() {
 
   document.getElementById('qContent').innerHTML = html;
 
-  // Hint
   const hintEl = document.getElementById('hintArea');
   if (p.hint) {
     hintEl.innerHTML = `
@@ -265,8 +248,6 @@ function render() {
   setView('form');
   if (p.tipo === 'num') setTimeout(() => document.getElementById('hInput')?.focus(), 40);
 }
-
-// ── INTERAÇÃO ──────────────────────────────────────────────────────────────
 
 function pick(id, v) {
   resp[id] = v;
@@ -295,8 +276,6 @@ function go(dir) {
   }
 }
 
-// ── PAUSE / RESUME ─────────────────────────────────────────────────────────
-
 function pause() {
   document.getElementById('pausePill').textContent   = `Etapa ${idx+1} de ${ativas().length}`;
   document.getElementById('headerBadge').textContent = 'Pausado';
@@ -306,50 +285,58 @@ function pause() {
 
 function resume() { render(); sc(); }
 
-// ── RESULT ─────────────────────────────────────────────────────────────────
-
 function showResult() {
   document.getElementById('headerBadge').textContent = 'Resultado';
   setView('result');
 
-  let soma = 0;
-  for (const p of ativas()) {
-    if (p.id === '__horas') continue;
-    const r = resp[p.id]; if (!r) continue;
-    soma += (REG[p.id]?.[r] || 0) * (PESOS[p.id] || 0);
-  }
-  const h = resp['__horas'] || 0, th = soma * h, fin = soma + th;
+  const perguntasAtivas = ativas().filter(p => p.id !== '__horas' && REG[p.id] && PESOS[p.id] > 0);
+  const totalPesos = perguntasAtivas.reduce((acc, p) => acc + PESOS[p.id], 0);
 
-  // count-up
+  let soma = 0;
+
+  for (const p of perguntasAtivas) {
+    const r = resp[p.id];
+    if (!r) continue;
+    const regMax = Math.max(...Object.values(REG[p.id]));
+    if (regMax === 0) continue;
+    const mxpts  = (PESOS[p.id] / totalPesos) * 100;
+    const pontos = (REG[p.id][r] / regMax) * mxpts;
+    soma += pontos;
+  }
+
+  soma = Math.round(soma * 100) / 100;
+
+  const h  = resp['__horas'] || 0;
   const el = document.getElementById('rScore');
   let cur  = 0;
-  const step = Math.max(1, Math.ceil(fin / 55));
-  const t    = setInterval(() => { cur = Math.min(cur+step, fin); el.textContent = cur; if (cur>=fin) clearInterval(t); }, 18);
+  const step = Math.max(0.1, soma / 55);
+  const t    = setInterval(() => {
+    cur = Math.min(cur + step, soma);
+    el.textContent = cur.toFixed(2);
+    if (cur >= soma) { el.textContent = soma.toFixed(2); clearInterval(t); }
+  }, 18);
 
-  document.getElementById('rSoma').textContent  = soma;
-  document.getElementById('rHoras').textContent = h+'h';
-  document.getElementById('rMult').textContent  = th;
-
-  // meta info
+  document.getElementById('rSoma').textContent  = soma.toFixed(2);
+  document.getElementById('rHoras').textContent = h + 'h';
+  document.getElementById('rMult').textContent  = '—';
   document.getElementById('rModelo').textContent  = regInfo.modelo;
   document.getElementById('rEmpresa').textContent = regInfo.empresa;
   document.getElementById('rArea').textContent    = regInfo.area;
 
-  // save to history
   const entry = {
     id:      Date.now(),
     modelo:  regInfo.modelo,
     empresa: regInfo.empresa,
     area:    regInfo.area,
-    score:   fin,
-    soma, horas:h, mult:th,
+    score:   soma,
+    soma,
+    horas:   h,
+    mult:    '—',
     date:    new Date().toISOString(),
   };
   saveToHistory(entry);
   sc();
 }
-
-// ── RESTART ────────────────────────────────────────────────────────────────
 
 function restart() {
   resp = {}; idx = 0;
@@ -359,8 +346,6 @@ function restart() {
   setView('register');
   sc();
 }
-
-// ── HISTORY MODAL ──────────────────────────────────────────────────────────
 
 function openHistory() {
   histSearch = '';
@@ -376,7 +361,7 @@ function closeHistory() {
 }
 
 function renderHistory() {
-  const q   = histSearch.toLowerCase();
+  const q    = histSearch.toLowerCase();
   const list = historyDB.filter(e => {
     const matchSearch =
       !q ||
@@ -393,12 +378,10 @@ function renderHistory() {
     return q ? (histFilter ? matchFilter : matchSearch) : (!histFilter || true);
   });
 
-  // Build unique filter chips from current DB
   const areas    = [...new Set(historyDB.map(e => e.area))].slice(0,6);
   const empresas = [...new Set(historyDB.map(e => e.empresa))].slice(0,4);
 
-  let chipsHTML = `
-    <button class="filter-chip ${!histFilter ? 'active':''}" onclick="setFilter('')">Todos</button>`;
+  let chipsHTML = `<button class="filter-chip ${!histFilter ? 'active':''}" onclick="setFilter('')">Todos</button>`;
   empresas.forEach(e => {
     chipsHTML += `<button class="filter-chip ${histFilter===e?'active':''}" onclick="setFilter('${e.replace(/'/g,"\\'")}')">🏢 ${e}</button>`;
   });
@@ -448,28 +431,24 @@ function loadFromHistory(id) {
 
   closeHistory();
 
-  // Show result directly
   document.getElementById('headerBadge').textContent = 'Resultado';
   setView('result');
 
   document.getElementById('rScore').textContent   = entry.score;
   document.getElementById('rSoma').textContent    = entry.soma;
   document.getElementById('rHoras').textContent   = entry.horas + 'h';
-  document.getElementById('rMult').textContent    = entry.mult;
+  document.getElementById('rMult').textContent    = entry.mult ?? '—';
   document.getElementById('rModelo').textContent  = entry.modelo;
   document.getElementById('rEmpresa').textContent = entry.empresa;
   document.getElementById('rArea').textContent    = entry.area;
   sc();
 }
 
-// Close on overlay click
 document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('historyModal').addEventListener('click', e => {
     if (e.target === document.getElementById('historyModal')) closeHistory();
   });
 });
-
-// ── KEYBOARD ───────────────────────────────────────────────────────────────
 
 document.addEventListener('keydown', e => {
   if (document.getElementById('historyModal').classList.contains('on')) {
@@ -486,8 +465,6 @@ document.addEventListener('keydown', e => {
   const v    = nums[e.key];
   if (v && p && !p.tipo && p.o[v-1]) pick(p.id, v);
 });
-
-// ── LOGO UPLOAD ────────────────────────────────────────────────────────────
 
 document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('logoInput').addEventListener('change', e => {
