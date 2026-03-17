@@ -1,29 +1,54 @@
+/* ─────────────────────────────────────────────────────────────────────────────
+   SCORES — alinhados com a planilha Calculadora RFN
+   ───────────────────────────────────────────────────────────────────────────── */
+// Scores idênticos à planilha (coluna G/H/I = opção1/opção2/opção3)
 const REG = {
   cliente:           { 1:0,  2:0  },
-  cliNovo:           { 1:0,  2:3  },
-  cliCasa:           { 1:1,  2:2  },
-  demandaQuaPre:     { 1:1,  2:2  },
-  nivConco:          { 1:3,  2:2,  3:1 },
-  negociacao:        { 1:1,  2:2,  3:3 },
-  nivSenioridadeExe: { 1:1,  2:2,  3:3 },
-  nivSenioridadeRev: { 1:1,  2:2,  3:3 },
-  timeExe:           { 1:1,  2:2  },
-  nivOcu:            { 1:1,  2:2,  3:3 }, // 
-  grauComplex:       { 1:1,  2:2,  3:3 },
-  estudosAprof:      { 1:3,  2:0  },
-  qtdReuniao:        { 1:3,  2:0  },
-  impactoEco:        { 1:1,  2:2,  3:3 },
-  nivUrg:            { 1:1,  2:2,  3:3 },
-  minutaPrev:        { 1:1,  2:2  },
-  modeloPartido:     { 1:3,  2:0  },
+  cliNovo:           { 1:2,  2:7  },   // Sim=2 | Não=7
+  cliCasa:           { 1:3,  2:7  },   // Recorrente=3 | Pontual=7
+  demandaQuaPre:     { 1:1,  2:3  },   // Preço=1 | Qualidade=3
+  nivConco:          { 1:1,  2:2,  3:3 }, // Alta=1 | Média=2 | Baixa=3
+  negociacao:        { 1:1,  2:2,  3:3 }, // Executivo=1 | Diretor/CLevel=2 | Acionista=3
+  nivSenioridadeExe: { 1:1,  2:2,  3:3 }, // Júnior=1 | Pleno=2 | Sênior=3
+  nivSenioridadeRev: { 1:1,  2:3,  3:4 }, // Júnior=1 | Pleno=3 | Sênior=4
+  timeExe:           { 1:1,  2:2  },   // Uma UNE=1 | Mais de uma=2
+  nivOcu:            { 1:2,  2:4,  3:6 }, // Ocioso=2 | Disponível=4 | MuitoOcupado=6
+  grauComplex:       { 1:10, 2:7,  3:3 }, // Alta=10 | Média=7 | Baixa=3
+  estudosAprof:      { 1:6,  2:2  },   // Sim=6 | Não=2
+  qtdReuniao:        { 1:3,  2:1  },   // Sim=3 | Não=1
+  impactoEco:        { 1:2,  2:4,  3:8 }, // 0-100K=2 | 100K-1M=4 | Acima1M=8
+  remuAdicional:     { 1:4,  2:1  },   // Sim=4 | Não=1
+  nivUrg:            { 1:8,  2:4,  3:2 }, // Alta=8 | Média=4 | Baixa=2
+  minutaPrev:        { 1:2,  2:1  },   // Há minuta=2 | Não há minuta=1  ← planilha K20=MAX(2,1)=2
+  modeloPartido:     { 1:3,  2:1  },   // Sim=3 | Não=1
 };
 
+// Pesos por pergunta (coluna J da planilha)
 const PESOS = {
   cliente:0, cliNovo:1, cliCasa:1, demandaQuaPre:1, nivConco:2, negociacao:2,
-  nivSenioridadeExe:1, nivSenioridadeRev:1, timeExe:1, nivOcu:1, grauComplex:1,
-  estudosAprof:1, qtdReuniao:1, impactoEco:2, nivUrg:2, minutaPrev:1, modeloPartido:2,
+  nivSenioridadeExe:1, nivSenioridadeRev:1, timeExe:1, nivOcu:1,
+  grauComplex:1, estudosAprof:1, qtdReuniao:1, impactoEco:2,
+  remuAdicional:1, nivUrg:2, minutaPrev:1, modeloPartido:2,
 };
+// Teto fixo = 100 (K23 da planilha = SUM(K4:K22) - K5_cliNovo = 100)
+// O máximo de cliNovo e cliCasa é 7 cada, mas apenas uma fica ativa,
+// então ambas contribuem no máximo 7 — o total nunca passa de 100.
 
+const VALOR_HORA_TETO = 900;
+const VALOR_HORA_MIN  = 300;
+
+function calcValorHora(pontuacao) {
+  const vh = (pontuacao / 100) * VALOR_HORA_TETO;
+  return Math.max(vh, VALOR_HORA_MIN);
+}
+
+function fmtBRL(v) {
+  return v.toLocaleString('pt-BR', { style:'currency', currency:'BRL', minimumFractionDigits:2 });
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   QUESTIONÁRIO
+   ───────────────────────────────────────────────────────────────────────────── */
 const QS = [
   {
     id:'cliente', s:'Perfil do Cliente',
@@ -36,7 +61,7 @@ const QS = [
     t:'Existe potencial de geração de recorrência?',
     o:['Sim','Não'],
     dep:{ id:'cliente', v:1 },
-    hint:'Clientes com alto potencial recorrente justificam uma postura comercial mais agressiva na precificação inicial.',
+    hint:'Clientes com alto potencial recorrente justificam uma postura comercial mais competitiva na precificação inicial.',
   },
   {
     id:'cliCasa', s:'Perfil do Cliente',
@@ -60,7 +85,7 @@ const QS = [
   {
     id:'negociacao', s:'Estratégia Comercial',
     t:'Com quem está sendo feita a negociação?',
-    o:['Pessoa Física','Diretor Jurídico','Acionista'],
+    o:['Executivo','Diretor / C-Level','Acionista'],
     hint:'A senioridade do interlocutor indica o nível estratégico da demanda e influencia a autoridade para aprovação de honorários.',
   },
   {
@@ -90,7 +115,7 @@ const QS = [
   {
     id:'grauComplex', s:'Complexidade',
     t:'Qual o grau de complexidade da demanda?',
-    o:['Baixa','Média','Alta'],
+    o:['Alta','Média','Baixa'],
     hint:'Demandas complexas exigem pesquisa aprofundada, maior número de revisões e envolvimento de especialistas, elevando o valor do trabalho.',
   },
   {
@@ -107,14 +132,20 @@ const QS = [
   },
   {
     id:'impactoEco', s:'Impacto & Urgência',
-    t:'Qual o nível de impacto econômico da demanda?',
+    t:'Qual o nível de impacto econômico da demanda (valor anual)?',
     o:['0 – 100K','100K – 1M','Acima de 1M'],
-    hint:'O impacto econômico da causa reflete a responsabilidade do escritório e baliza a proporcionalidade dos honorários.',
+    hint:'O impacto econômico considera o valor anual estimado envolvido na demanda — economia potencial, recuperação de valores, mitigação de riscos ou incremento de resultado financeiro para o cliente.',
+  },
+  {
+    id:'remuAdicional', s:'Impacto & Urgência',
+    t:'Há possibilidade de remuneração adicional sobre o benefício econômico?',
+    o:['Sim','Não'],
+    hint:'Quando existe possibilidade de êxito ou prêmio, a proposta pode prever honorários fixos menores combinados com remuneração variável vinculada aos resultados obtidos.',
   },
   {
     id:'nivUrg', s:'Impacto & Urgência',
     t:'Qual o nível de urgência para o cliente?',
-    o:['Baixo','Médio','Alto'],
+    o:['Alta','Média','Baixa'],
     hint:'Alta urgência exige remanejamento de prioridades internas, horas extras e atenção concentrada, elevando o custo real da operação.',
   },
   {
@@ -133,17 +164,23 @@ const QS = [
     id:'__horas', s:'Estimativa DFA',
     t:'Qual o tempo esperado para execução da demanda?',
     tipo:'num',
-    hint:'A estimativa de horas pela DFA é a base de cálculo final. Quanto mais precisa, mais justo e competitivo será o valor proposto.',
+    hint:'A estimativa de horas pela DFA é a base de cálculo final. Informe com precisão — esse número, combinado com a pontuação, determina o valor orientativo da proposta.',
   },
 ];
 
-let resp       = {};
-let idx        = 0;
-let regInfo    = { modelo:'', empresa:'', area:'' };
-let historyDB  = JSON.parse(localStorage.getItem('dfa_history') || '[]');
+/* ─────────────────────────────────────────────────────────────────────────────
+   ESTADO
+   ───────────────────────────────────────────────────────────────────────────── */
+let resp      = {};
+let idx       = 0;
+let regInfo   = { modelo:'', empresa:'', area:'' };
+let historyDB = JSON.parse(localStorage.getItem('dfa_history') || '[]');
 let histSearch = '';
 let histFilter = '';
 
+/* ─────────────────────────────────────────────────────────────────────────────
+   HELPERS
+   ───────────────────────────────────────────────────────────────────────────── */
 function ativas() {
   return QS.filter(p => !p.dep || resp[p.dep.id] === p.dep.v);
 }
@@ -161,6 +198,28 @@ function formatDate(iso) {
   return d.toLocaleDateString('pt-BR', { day:'2-digit', month:'2-digit', year:'2-digit' });
 }
 
+/* ─────────────────────────────────────────────────────────────────────────────
+   CÁLCULO DE PONTUAÇÃO — idêntico à planilha
+   Fórmula: L (Preço) = score_escolhido × peso
+   Total   = SUM(L4:L22)  →  máximo = 100
+   ───────────────────────────────────────────────────────────────────────────── */
+function calcScore() {
+  let soma = 0;
+  for (const p of QS) {
+    if (p.id === '__horas') continue;
+    if (!REG[p.id] || !PESOS[p.id]) continue;
+    // Pergunta condicional inativa: não pontua
+    if (p.dep && resp[p.dep.id] !== p.dep.v) continue;
+    const r = resp[p.id];
+    if (!r) continue;
+    soma += (REG[p.id][r] || 0) * PESOS[p.id];
+  }
+  return Math.round(soma * 100) / 100;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   VIEWS
+   ───────────────────────────────────────────────────────────────────────────── */
 function setView(view) {
   document.getElementById('registerWrap').style.display = view === 'register' ? '' : 'none';
   document.getElementById('formCard').style.display     = view === 'form'     ? '' : 'none';
@@ -170,6 +229,9 @@ function setView(view) {
   document.getElementById('btnPauseTop').classList.toggle('visible', view === 'form');
 }
 
+/* ─────────────────────────────────────────────────────────────────────────────
+   REGISTRO
+   ───────────────────────────────────────────────────────────────────────────── */
 function startEvaluation() {
   const modelo  = document.getElementById('fModelo').value.trim();
   const empresa = document.getElementById('fEmpresa').value.trim();
@@ -193,16 +255,19 @@ function startEvaluation() {
   render();
 }
 
+/* ─────────────────────────────────────────────────────────────────────────────
+   RENDER PERGUNTA
+   ───────────────────────────────────────────────────────────────────────────── */
 function render() {
   const list  = ativas();
   const total = list.length;
   const p     = list[idx];
 
-  document.getElementById('headerBadge').textContent  = p.s;
-  document.getElementById('progCount').textContent    = `${idx+1} de ${total}`;
-  document.getElementById('progFill').style.width     = `${((idx+1)/total)*100}%`;
-  document.getElementById('btnPrev').disabled         = idx === 0;
-  document.getElementById('btnNext').textContent      = idx === total-1 ? 'Calcular' : 'Próxima';
+  document.getElementById('headerBadge').textContent = p.s;
+  document.getElementById('progCount').textContent   = `${idx+1} de ${total}`;
+  document.getElementById('progFill').style.width    = `${((idx+1)/total)*100}%`;
+  document.getElementById('btnPrev').disabled        = idx === 0;
+  document.getElementById('btnNext').textContent     = idx === total-1 ? 'Calcular' : 'Próxima';
 
   let html = `
     <div class="q-header" style="margin:20px 24px 0;">
@@ -217,6 +282,7 @@ function render() {
           <input type="number" id="hInput" min="1" placeholder="0" value="${resp['__horas']||''}">
           <span class="num-unit">horas</span>
         </div>
+        <p class="num-hint">Informe a estimativa de horas da DFA para execução desta demanda.</p>
       </div>`;
   } else {
     const opts = p.o.map((o,i) => {
@@ -249,6 +315,9 @@ function render() {
   if (p.tipo === 'num') setTimeout(() => document.getElementById('hInput')?.focus(), 40);
 }
 
+/* ─────────────────────────────────────────────────────────────────────────────
+   INTERAÇÃO
+   ───────────────────────────────────────────────────────────────────────────── */
 function pick(id, v) {
   resp[id] = v;
   document.querySelectorAll('.opt').forEach(el => {
@@ -285,54 +354,44 @@ function pause() {
 
 function resume() { render(); sc(); }
 
+/* ─────────────────────────────────────────────────────────────────────────────
+   RESULTADO
+   ───────────────────────────────────────────────────────────────────────────── */
+
 function showResult() {
   document.getElementById('headerBadge').textContent = 'Resultado';
   setView('result');
 
-  const perguntasAtivas = ativas().filter(p => p.id !== '__horas' && REG[p.id] && PESOS[p.id] > 0);
-  const totalPesos = perguntasAtivas.reduce((acc, p) => acc + PESOS[p.id], 0);
+  const pontuacao  = calcScore();
+  const horas      = resp['__horas'] || 0;
+  const valorHora  = calcValorHora(pontuacao);
+  const valorTotal = valorHora * horas;
+  const temRemu    = resp['remuAdicional'] === 1;
 
-  let soma = 0;
-
-  for (const p of perguntasAtivas) {
-    const r = resp[p.id];
-    if (!r) continue;
-    const regMax = Math.max(...Object.values(REG[p.id]));
-    if (regMax === 0) continue;
-    const mxpts  = (PESOS[p.id] / totalPesos) * 100;
-    const pontos = (REG[p.id][r] / regMax) * mxpts;
-    soma += pontos;
-  }
-
-  soma = Math.round(soma * 100) / 100;
-
-  const h  = resp['__horas'] || 0;
-  const el = document.getElementById('rScore');
-  let cur  = 0;
-  const step = Math.max(0.1, soma / 55);
-  const t    = setInterval(() => {
-    cur = Math.min(cur + step, soma);
-    el.textContent = cur.toFixed(2);
-    if (cur >= soma) { el.textContent = soma.toFixed(2); clearInterval(t); }
+  /* Animação do score */
+  const el  = document.getElementById('rScore');
+  let cur   = 0;
+  const stp = Math.max(0.1, pontuacao / 55);
+  const tmr = setInterval(() => {
+    cur = Math.min(cur + stp, pontuacao);
+    el.textContent = cur.toFixed(1);
+    if (cur >= pontuacao) { el.textContent = pontuacao.toFixed(1); clearInterval(tmr); }
   }, 18);
 
-  document.getElementById('rSoma').textContent  = soma.toFixed(2);
-  document.getElementById('rHoras').textContent = h + 'h';
-  document.getElementById('rMult').textContent  = '—';
-  document.getElementById('rModelo').textContent  = regInfo.modelo;
-  document.getElementById('rEmpresa').textContent = regInfo.empresa;
-  document.getElementById('rArea').textContent    = regInfo.area;
+  document.getElementById('rSoma').textContent      = pontuacao.toFixed(1) + ' pts';
+  document.getElementById('rHoras').textContent     = horas + 'h';
+  document.getElementById('rValorHora').textContent = fmtBRL(valorHora);
+  document.getElementById('rValorTotal').textContent= fmtBRL(valorTotal);
+  document.getElementById('rModelo').textContent    = regInfo.modelo;
+  document.getElementById('rEmpresa').textContent   = regInfo.empresa;
+  document.getElementById('rArea').textContent      = regInfo.area;
+
+
 
   const entry = {
-    id:      Date.now(),
-    modelo:  regInfo.modelo,
-    empresa: regInfo.empresa,
-    area:    regInfo.area,
-    score:   soma,
-    soma,
-    horas:   h,
-    mult:    '—',
-    date:    new Date().toISOString(),
+    id: Date.now(), modelo: regInfo.modelo, empresa: regInfo.empresa,
+    area: regInfo.area, score: pontuacao, horas, valorHora, valorTotal,
+    temRemu, date: new Date().toISOString(),
   };
   saveToHistory(entry);
   sc();
@@ -347,6 +406,9 @@ function restart() {
   sc();
 }
 
+/* ─────────────────────────────────────────────────────────────────────────────
+   HISTÓRICO
+   ───────────────────────────────────────────────────────────────────────────── */
 function openHistory() {
   histSearch = '';
   histFilter = '';
@@ -363,19 +425,10 @@ function closeHistory() {
 function renderHistory() {
   const q    = histSearch.toLowerCase();
   const list = historyDB.filter(e => {
-    const matchSearch =
-      !q ||
-      e.empresa.toLowerCase().includes(q) ||
-      e.modelo.toLowerCase().includes(q)  ||
-      e.area.toLowerCase().includes(q);
-
-    const matchFilter =
-      !histFilter ||
-      (histFilter === 'empresa' && e.empresa.toLowerCase().includes(q)) ||
-      (histFilter === 'modelo'  && e.modelo.toLowerCase().includes(q))  ||
-      (histFilter === 'area'    && e.area.toLowerCase().includes(q));
-
-    return q ? (histFilter ? matchFilter : matchSearch) : (!histFilter || true);
+    const matchSearch = !q || e.empresa.toLowerCase().includes(q) ||
+      e.modelo.toLowerCase().includes(q) || e.area.toLowerCase().includes(q);
+    const matchFilter = !histFilter || e.empresa === histFilter || e.area === histFilter;
+    return matchSearch && (!histFilter || matchFilter);
   });
 
   const areas    = [...new Set(historyDB.map(e => e.area))].slice(0,6);
@@ -408,7 +461,10 @@ function renderHistory() {
         <div class="history-item-name">${e.empresa}</div>
         <div class="history-item-meta">${e.modelo} · ${e.area}</div>
       </div>
-      <div class="history-item-score">${e.score} pts</div>
+      <div class="history-item-right">
+        <div class="history-item-score">${(e.score||0).toFixed(1)} pts</div>
+        ${e.valorTotal ? `<div class="history-item-valor">${fmtBRL(e.valorTotal)}</div>` : ''}
+      </div>
       <div class="history-item-date">${formatDate(e.date)}</div>
     </div>`).join('');
 }
@@ -418,35 +474,46 @@ function setFilter(val) {
   renderHistory();
 }
 
+function loadFromHistory(id) {
+  const entry = historyDB.find(e => e.id === id);
+  if (!entry) return;
+  closeHistory();
+
+  document.getElementById('headerBadge').textContent   = 'Resultado';
+  setView('result');
+  document.getElementById('rScore').textContent        = (entry.score||0).toFixed(1);
+  document.getElementById('rSoma').textContent         = (entry.score||0).toFixed(1) + ' pts';
+  document.getElementById('rHoras').textContent        = (entry.horas||0) + 'h';
+  document.getElementById('rValorHora').textContent    = entry.valorHora  ? fmtBRL(entry.valorHora)  : '—';
+  document.getElementById('rValorTotal').textContent   = entry.valorTotal ? fmtBRL(entry.valorTotal) : '—';
+  document.getElementById('rModelo').textContent       = entry.modelo;
+  document.getElementById('rEmpresa').textContent      = entry.empresa;
+  document.getElementById('rArea').textContent         = entry.area;
+
+
+  sc();
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   EVENTOS
+   ───────────────────────────────────────────────────────────────────────────── */
 document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('histSearch').addEventListener('input', e => {
     histSearch = e.target.value;
     renderHistory();
   });
-});
-
-function loadFromHistory(id) {
-  const entry = historyDB.find(e => e.id === id);
-  if (!entry) return;
-
-  closeHistory();
-
-  document.getElementById('headerBadge').textContent = 'Resultado';
-  setView('result');
-
-  document.getElementById('rScore').textContent   = entry.score;
-  document.getElementById('rSoma').textContent    = entry.soma;
-  document.getElementById('rHoras').textContent   = entry.horas + 'h';
-  document.getElementById('rMult').textContent    = entry.mult ?? '—';
-  document.getElementById('rModelo').textContent  = entry.modelo;
-  document.getElementById('rEmpresa').textContent = entry.empresa;
-  document.getElementById('rArea').textContent    = entry.area;
-  sc();
-}
-
-document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('historyModal').addEventListener('click', e => {
     if (e.target === document.getElementById('historyModal')) closeHistory();
+  });
+  document.getElementById('logoInput').addEventListener('change', e => {
+    const f = e.target.files[0]; if (!f) return;
+    const r = new FileReader();
+    r.onload = ev => {
+      const img = document.getElementById('logoImg');
+      img.src = ev.target.result; img.style.display = 'block';
+      document.querySelector('#logoBox span').style.display = 'none';
+    };
+    r.readAsDataURL(f);
   });
 });
 
@@ -464,17 +531,4 @@ document.addEventListener('keydown', e => {
   const nums = {'1':1,'2':2,'3':3,'4':4};
   const v    = nums[e.key];
   if (v && p && !p.tipo && p.o[v-1]) pick(p.id, v);
-});
-
-document.addEventListener('DOMContentLoaded', () => {
-  document.getElementById('logoInput').addEventListener('change', e => {
-    const f = e.target.files[0]; if (!f) return;
-    const r = new FileReader();
-    r.onload = ev => {
-      const img = document.getElementById('logoImg');
-      img.src = ev.target.result; img.style.display = 'block';
-      document.querySelector('#logoBox span').style.display = 'none';
-    };
-    r.readAsDataURL(f);
-  });
 });

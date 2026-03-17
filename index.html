@@ -69,7 +69,7 @@
             <label class="field-label" for="fEmpresa">Nome da Empresa</label>
             <input
               class="field-input" id="fEmpresa" type="text"
-              placeholder="Ex: Acme Indústria S.A."
+              placeholder="Ex: Da Fonte Advogados"
               autocomplete="off"
             >
           </div>
@@ -178,17 +178,26 @@
       <div class="result-stats">
         <div class="stat">
           <div class="stat-val" id="rSoma">—</div>
-          <div class="stat-lbl">Soma Base</div>
+          <div class="stat-lbl">Pontuação</div>
         </div>
         <div class="stat">
           <div class="stat-val" id="rHoras">—</div>
           <div class="stat-lbl">Horas DFA</div>
         </div>
         <div class="stat">
-          <div class="stat-val" id="rMult">—</div>
-          <div class="stat-lbl">Pts × Horas</div>
+          <div class="stat-val" id="rValorHora">—</div>
+          <div class="stat-lbl">Valor / hora</div>
         </div>
       </div>
+
+      <!-- Valor total destacado -->
+      <div class="result-total-wrap">
+        <span class="result-total-label">Estimativa total de honorários</span>
+        <span class="result-total-val" id="rValorTotal">—</span>
+      </div>
+
+
+
     </div>
 
     <button class="btn-restart" onclick="restart()">← Fazer nova avaliação</button>

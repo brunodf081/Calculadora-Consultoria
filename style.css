@@ -517,3 +517,86 @@ body {
   .history-panel { max-width:100%; }
   .brand-name { display:none; }
 }
+
+/* ── NUM HINT ─────────────────────────────────────────────────────────────── */
+.num-hint {
+  margin-top: 10px;
+  font-size: 12px; color: var(--gray-400);
+  text-align: center; line-height: 1.5;
+}
+
+/* ── RESULT TOTAL ─────────────────────────────────────────────────────────── */
+.result-total-wrap {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 24px;
+  background: var(--green-light);
+  border-top: 1px solid var(--green-border);
+  border-bottom: 1px solid var(--green-border);
+}
+.result-total-label {
+  font-size: 12px; font-weight: 600; color: var(--green-dark);
+  text-transform: uppercase; letter-spacing: .04em;
+}
+.result-total-val {
+  font-size: 22px; font-weight: 700; color: var(--green-dark);
+}
+
+/* ── BANDA DE HONORÁRIOS ──────────────────────────────────────────────────── */
+.banda-wrap {
+  padding: 20px 24px;
+  border-top: 1px solid var(--gray-100);
+}
+
+.banda-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 14px;
+}
+.banda-title {
+  font-size: 12px; font-weight: 600; color: var(--gray-700);
+  text-transform: uppercase; letter-spacing: .04em;
+}
+.banda-label {
+  font-size: 12px; font-weight: 700;
+  padding: 3px 10px; border-radius: 99px;
+  background: var(--gray-100);
+}
+
+.banda-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--gray-100);
+}
+.banda-row:last-of-type { border-bottom: none; }
+.banda-info { font-size: 13px; color: var(--gray-500); }
+.banda-val  { font-size: 15px; font-weight: 700; color: var(--gray-900); }
+
+.banda-bar-wrap {
+  height: 8px; background: var(--gray-200); border-radius: 99px;
+  overflow: hidden; margin: 14px 0 4px;
+}
+.banda-bar {
+  height: 100%; border-radius: 99px;
+  transition: width .8s cubic-bezier(.4,0,.2,1);
+}
+.banda-bar-labels {
+  display: flex; justify-content: space-between;
+  font-size: 10px; color: var(--gray-400);
+  margin-bottom: 12px;
+}
+
+.banda-remu {
+  display: flex; align-items: flex-start; gap: 8px;
+  margin-top: 12px; padding: 10px 14px;
+  background: #FEF9C3; border: 1px solid #FDE047;
+  border-radius: 8px;
+  font-size: 12px; color: #713F12; line-height: 1.5;
+}
+.banda-remu svg { flex-shrink: 0; margin-top: 1px; color: #A16207; }
+
+/* ── HISTORY ITEM RIGHT (score + valor) ───────────────────────────────────── */
+.history-item-right {
+  display: flex; flex-direction: column; align-items: flex-end; gap: 3px; flex-shrink: 0;
+}
+.history-item-valor {
+  font-size: 10px; color: var(--gray-400); white-space: nowrap;
+}
